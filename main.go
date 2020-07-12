@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -114,4 +117,25 @@ func CheckIn(check Iner) http.HandlerFunc {
 // CheckOut check-out from place
 func CheckOut(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func SealMiddleware() mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			str, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+			data, err := base64.StdEncoding.DecodeString(string(str))
+			if err != nil {
+				w.WriteHeader(400)
+				return
+			}
+
+			buff := bytes.NewBuffer(data)
+			r.Body = ioutil.NopCloser(buff)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
