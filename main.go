@@ -12,11 +12,16 @@ import (
 )
 
 func main() {
+	db, err := sql.Open("sqlite3", "thaichana.db")
+	defer db.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 	r := mux.NewRouter()
 
 	// This will serve files under http://localhost:8000/static/<filename>
 	r.HandleFunc("/currents", Recently).Methods(http.MethodPost)
-	r.HandleFunc("/checkin", CheckIn(insertCheckIn{})).Methods(http.MethodPost)
+	r.HandleFunc("/checkin", CheckIn(InFunc(NewInsertCheckIn(db)))).Methods(http.MethodPost)
 	r.HandleFunc("/checkout", CheckOut).Methods(http.MethodPost)
 
 	srv := &http.Server{
@@ -45,23 +50,20 @@ func Recently(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func NewInsertCheckIn(db *sql.DB) func(id, placeID int64) error {
+	return func(id, placeID int64) error {
+		_, err := db.Exec("INSERT INTO visits VALUES(?, ?);", id, placeID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 type InFunc func(id, placeID int64) error
 
 func (fn InFunc) In(id, placeID int64) error {
 	return fn(id, placeID)
-}
-
-type insertCheckIn struct{}
-
-func (insertCheckIn) In(ID, placeID int64) error {
-	db, err := sql.Open("sqlite3", "thaichana.db")
-	if err != nil {
-		log.Fatal(err)
-		return err
-	}
-	defer db.Close()
-	_, err = db.Exec("INSERT INTO visits VALUES(?, ?);", ID, placeID)
-	return err
 }
 
 type Iner interface {
