@@ -45,6 +45,17 @@ func Recently(w http.ResponseWriter, r *http.Request) {
 
 }
 
+var InsertCheckIn = func(ID, placeID int64) error {
+	db, err := sql.Open("sqlite3", "thaichana.db")
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec("INSERT INTO visits VALUES(?, ?);", ID, placeID)
+	return err
+}
+
 // CheckIn check-in to place, returns density (ok, too much)
 func CheckIn(w http.ResponseWriter, r *http.Request) {
 	var chk Check
@@ -55,15 +66,7 @@ func CheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	db, err := sql.Open("sqlite3", "thaichana.db")
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO visits VALUES(?, ?);", chk.ID, chk.PlaceID)
-	if err != nil {
+	if err := InsertCheckIn(chk.ID, chk.PlaceID); err == nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(err)
 		return
