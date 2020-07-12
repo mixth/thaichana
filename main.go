@@ -31,8 +31,8 @@ func main() {
 }
 
 type Check struct {
-	ID      int64
-	PlaceID int64
+	ID      int64 `json:id`
+	PlaceID int64 `json:place_id`
 }
 
 type Location struct {
@@ -62,7 +62,7 @@ func CheckIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO visits VALUES(?, ?", chk.ID, chk.PlaceID)
+	_, err = db.Exec("INSERT INTO visits VALUES(?, ?);", chk.ID, chk.PlaceID)
 	if err != nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(err)
