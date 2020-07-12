@@ -45,6 +45,12 @@ func Recently(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type InFunc func(id, placeID int64) error
+
+func (fn InFunc) In(id, placeID int64) error {
+	return fn(id, placeID)
+}
+
 type insertCheckIn struct{}
 
 func (insertCheckIn) In(ID, placeID int64) error {
