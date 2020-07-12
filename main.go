@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"thaichana/logger"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -24,15 +24,15 @@ func init() {
 }
 
 func main() {
-	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	z, _ := zap.NewDevelopment()
+	defer z.Sync()
 
 	hostname, _ := os.Hostname()
-	logger = logger.With(zap.String("hostname", hostname))
-	zap.ReplaceGlobals(logger)
+	z = z.With(zap.String("hostname", hostname))
+	zap.ReplaceGlobals(z)
 
 	r := mux.NewRouter()
-	r.Use(LoggerMiddleware(logger))
+	r.Use(logger.Middleware(z))
 
 	db, err := sql.Open("sqlite3", viper.GetString("db.conn"))
 	if err != nil {
@@ -95,7 +95,7 @@ type Iner interface {
 func CheckIn(check Iner) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var chk Check
-		r.Context().Value("logger").(*zap.Logger).Info("Check-in")
+		logger.L(r.Context()).Info("Check-in")
 		if err := json.NewDecoder(r.Body).Decode(&chk); err != nil {
 			w.WriteHeader(500)
 			json.NewEncoder(w).Encode(err)
@@ -114,13 +114,4 @@ func CheckIn(check Iner) http.HandlerFunc {
 // CheckOut check-out from place
 func CheckOut(w http.ResponseWriter, r *http.Request) {
 
-}
-
-func LoggerMiddleware(logger *zap.Logger) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			newLogger := logger.With(zap.String("middleware", "test"))
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "logger", newLogger)))
-		})
-	}
 }
