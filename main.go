@@ -5,19 +5,29 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/viper"
 )
 
+func init() {
+	viper.SetDefault("port", "8000")
+	viper.SetDefault("db.conn", "thaichana.db")
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+}
+
 func main() {
-	db, err := sql.Open("sqlite3", "thaichana.db")
-	defer db.Close()
+	r := mux.NewRouter()
+
+	db, err := sql.Open("sqlite3", viper.GetString("db.conn"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	r := mux.NewRouter()
+	defer db.Close()
 
 	// This will serve files under http://localhost:8000/static/<filename>
 	r.HandleFunc("/currents", Recently).Methods(http.MethodPost)
@@ -26,7 +36,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler: r,
-		Addr:    "127.0.0.1:8000",
+		Addr:    "127.0.0.1:" + viper.GetString("port"),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -81,7 +91,7 @@ func CheckIn(check Iner) http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		if err := check.In(chk.ID, chk.PlaceID); err == nil {
+		if err := check.In(chk.ID, chk.PlaceID); err != nil {
 			w.WriteHeader(500)
 			json.NewEncoder(w).Encode(err)
 			return
