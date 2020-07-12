@@ -36,6 +36,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Use(logger.Middleware(z))
+	r.Use(SealMiddleware())
 
 	db, err := sql.Open("sqlite3", viper.GetString("db.conn"))
 	if err != nil {
@@ -111,6 +112,10 @@ func CheckIn(check Iner) http.HandlerFunc {
 			json.NewEncoder(w).Encode(err)
 			return
 		}
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "ok",
+		})
 	}
 }
 
@@ -135,7 +140,16 @@ func SealMiddleware() mux.MiddlewareFunc {
 
 			buff := bytes.NewBuffer(data)
 			r.Body = ioutil.NopCloser(buff)
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(&EncodeWriter{w}, r)
 		})
 	}
+}
+
+type EncodeWriter struct {
+	http.ResponseWriter
+}
+
+func (w *EncodeWriter) Write(b []byte) (int, error) {
+	str := base64.StdEncoding.EncodeToString(b)
+	return w.ResponseWriter.Write([]byte(str))
 }
