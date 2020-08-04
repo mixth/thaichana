@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  title: Currents
+  version: '1.0'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /currents:
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Current'
+      operationId: get-curents
+    parameters: []
+  /checkin:
+    post:
+      summary: ''
+      operationId: post-checkin
+      responses:
+        '400':
+          description: Bad Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Check-in'
+components:
+  schemas:
+    Check-in:
+      title: Check-in
+      type: object
+      properties:
+        id:
+          type: integer
+        place_id:
+          type: string
+      x-examples:
+        Request Example:
+          id: 102
+          place_id: djkl43
+    Current:
+      title: Current
+      type: object
+      properties:
+        id:
+          type: integer
+        place_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
