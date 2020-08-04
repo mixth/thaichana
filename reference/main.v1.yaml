@@ -1,24 +1,16 @@
 openapi: 3.0.0
 info:
-  title: Currents
+  title: Thai Chana
   version: '1.0'
 servers:
   - url: 'http://localhost:3000'
 paths:
   /currents:
     get:
-      summary: Your GET endpoint
+      summary: Currents
       tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Current'
-      operationId: get-curents
+      responses: {}
+      operationId: get-currents
     parameters: []
   /checkin:
     post:
@@ -32,6 +24,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Check-in'
+  /checkout:
+    post:
+      summary: Checkout
+      tags: []
+      responses: {}
+      operationId: post-checkout
 components:
   schemas:
     Check-in:
